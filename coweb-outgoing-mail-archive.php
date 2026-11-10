@@ -7,7 +7,7 @@
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Description: Log WordPress emails in a private admin mailbox with search, deletion and automatic retention limits.
- * Version: 1.3.2
+ * Version: 1.3.3
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Text Domain: coweb-outgoing-mail-archive
@@ -94,7 +94,7 @@ final class CoWeb_Outgoing_Mail_Archive {
 		}
 		global $wpdb;
 		self::cleanup();
-		echo '<div class="wrap" dir="' . esc_attr( is_rtl() ? 'rtl' : 'ltr' ) . '"><h1>' . esc_html__( 'CoWeb Outgoing Mail Archive', 'coweb-outgoing-mail-archive' ) . '</h1><p>' . esc_html__( 'New WordPress email attempts on this site. Records are kept for up to 30 days and are visible to administrators only. Sending status does not confirm delivery.', 'coweb-outgoing-mail-archive' ) . '</p><p>' . esc_html( home_url() ) . ' · ' . esc_html( wp_get_environment_type() ) . '</p>';
+		echo '<div class="wrap" dir="' . esc_attr( is_rtl() ? 'rtl' : 'ltr' ) . '"><h1>' . esc_html__( 'Outgoing Mail Archive', 'coweb-outgoing-mail-archive' ) . '</h1><p>' . esc_html__( 'New WordPress email attempts on this site. Records are kept for up to 30 days and are visible to administrators only. Sending status does not confirm delivery.', 'coweb-outgoing-mail-archive' ) . '</p><p>' . esc_html( home_url() ) . ' · ' . esc_html( wp_get_environment_type() ) . '</p>';
 		$id = absint( $_GET['mail_id'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only administrator search/detail request.
 		if ( ! $id ) {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="site_mailbox_settings">';
@@ -239,7 +239,7 @@ add_action( 'site_mailbox_cleanup', array( 'CoWeb_Outgoing_Mail_Archive', 'clean
 add_action(
 	'admin_menu',
 	function () {
-		add_menu_page( esc_html__( 'CoWeb Outgoing Mail Archive', 'coweb-outgoing-mail-archive' ), esc_html__( 'CoWeb Outgoing Mail Archive', 'coweb-outgoing-mail-archive' ), 'manage_options', 'coweb-outgoing-mail-archive', array( 'CoWeb_Outgoing_Mail_Archive', 'page' ), 'dashicons-email-alt', 81 );
+		add_menu_page( esc_html__( 'Outgoing Mail Archive', 'coweb-outgoing-mail-archive' ), esc_html__( 'Outgoing Mail Archive', 'coweb-outgoing-mail-archive' ), 'manage_options', 'coweb-outgoing-mail-archive', array( 'CoWeb_Outgoing_Mail_Archive', 'page' ), 'dashicons-email-alt', 81 );
 	}
 );
 add_action( 'admin_post_site_mailbox_delete', array( 'CoWeb_Outgoing_Mail_Archive', 'delete' ) );
@@ -258,7 +258,7 @@ add_action(
 	'admin_enqueue_scripts',
 	function ( $hook ) {
 		if ( $hook === 'toplevel_page_coweb-outgoing-mail-archive' ) {
-			wp_enqueue_script( 'coweb-outgoing-mail-archive-admin', plugins_url( 'assets/admin.js', __FILE__ ), array(), '1.3.2', true );
+			wp_enqueue_script( 'coweb-outgoing-mail-archive-admin', plugins_url( 'assets/admin.js', __FILE__ ), array(), '1.3.3', true );
 		}
 	}
 );

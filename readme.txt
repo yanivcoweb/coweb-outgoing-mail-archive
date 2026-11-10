@@ -4,7 +4,7 @@ Tags: email, mail log, smtp, development, debugging
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -71,6 +71,9 @@ Stored fields: recipients, subject, message body, UTC timestamp, reported sendin
 
 == Changelog ==
 
+= 1.3.3 =
+* Shortened the admin menu label and mailbox page title to Outgoing Mail Archive.
+
 = 1.3.2 =
 * Renamed to CoWeb Outgoing Mail Archive with matching text domain.
 * Use WordPress.org language packs instead of bundled translations and manual loading.
@@ -89,6 +92,9 @@ Stored fields: recipients, subject, message body, UTC timestamp, reported sendin
 * Initial private release.
 
 == Upgrade Notice ==
+
+= 1.3.3 =
+Shorter admin menu label and page title. No data changes.
 
 = 1.3.2 =
 Renamed for directory review. Existing mailbox records and settings use the same storage identifiers. Translations are distributed through WordPress.org language packs.
