@@ -15,6 +15,8 @@ foreach ( $outgoing_mail_archive_sites as $outgoing_mail_archive_site_id ) {
 	$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $wpdb->prefix . 'site_mailbox' ) );
 	wp_clear_scheduled_hook( 'site_mailbox_cleanup' );
 	delete_option( 'site_mailbox_limit' );
+	delete_option( 'site_mailbox_retention_days' );
+	delete_option( 'site_mailbox_block_test_orders' );
 	delete_option( 'site_mailbox_schema' );
 	if ( is_multisite() ) {
 		restore_current_blog(); }
