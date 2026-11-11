@@ -7,7 +7,7 @@
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Description: Log WordPress emails in a private admin mailbox with search, deletion and automatic retention limits.
- * Version: 1.3.3
+ * Version: 1.3.4
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Text Domain: coweb-outgoing-mail-archive
@@ -108,7 +108,8 @@ final class CoWeb_Outgoing_Mail_Archive {
 				echo '<p>' . esc_html__( 'Message not found.', 'coweb-outgoing-mail-archive' ) . '</p></div>';
 				return;
 			}
-			echo '<h2>' . esc_html( $row->subject ) . '</h2><p>' . esc_html__( 'To: ', 'coweb-outgoing-mail-archive' ) . '' . esc_html( $row->recipients ) . '</p><p>' . esc_html( self::label( $row->status ) ) . '</p><p>' . esc_html( $row->error_message ) . '</p><h3>' . esc_html__( 'Message source', 'coweb-outgoing-mail-archive' ) . '</h3><pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;padding:20px;direction:ltr;text-align:start">' . esc_html( $row->message ) . '</pre>';
+			echo '<h2>' . esc_html( $row->subject ) . '</h2><p>' . esc_html__( 'To: ', 'coweb-outgoing-mail-archive' ) . '' . esc_html( $row->recipients ) . '</p><p>' . esc_html( self::label( $row->status ) ) . '</p><p>' . esc_html( $row->error_message ) . '</p>';
+			self::message_view( $row->message );
 			self::delete_form_start();
 			echo '<input type="hidden" name="mail_ids[]" value="' . esc_attr( $row->id ) . '"><button class="button" name="delete_scope" value="selected" data-confirm="' . esc_html__( 'Delete this message?', 'coweb-outgoing-mail-archive' ) . '">' . esc_html__( 'Delete message', 'coweb-outgoing-mail-archive' ) . '</button></form></div>';
 			return;
@@ -155,6 +156,53 @@ final class CoWeb_Outgoing_Mail_Archive {
 		) . '</p><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-confirm="' . esc_html__( 'Delete all stored messages?', 'coweb-outgoing-mail-archive' ) . '"><input type="hidden" name="action" value="site_mailbox_delete">';
 		wp_nonce_field( 'site_mailbox_delete' );
 		echo '<input type="hidden" name="delete_scope" value="all"><button class="button">' . esc_html__( 'Delete all messages', 'coweb-outgoing-mail-archive' ) . '</button></form></div>';
+	}
+	/**
+	 * Whether a logged body is HTML. Headers are not stored, so this looks for common tags;
+	 * plain text such as "<https://example.com>" does not match.
+	 */
+	public static function is_html( $message ) {
+		return (bool) preg_match( '/<\s*(?:!doctype\s+html|html|head|body|table|div|p|br|a|span|h[1-6]|img|ul|ol|li|strong|b|em|font|center|style)\b/i', $message );
+	}
+	private static function origin( $url ) {
+		$parts = wp_parse_url( $url );
+		if ( empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
+			return '';
+		}
+		return $parts['scheme'] . '://' . $parts['host'] . ( empty( $parts['port'] ) ? '' : ':' . $parts['port'] );
+	}
+	/**
+	 * The HTML document shown in the preview frame. A Content Security Policy blocks
+	 * everything except inline styles and images from this site or data: URIs, so opening
+	 * a message makes no request to another server. Links open in a new tab.
+	 */
+	public static function preview_document( $html ) {
+		$origins = array_unique( array_filter( array( self::origin( home_url() ), self::origin( site_url() ), self::origin( content_url() ) ) ) );
+		$head    = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data: ' . implode( ' ', $origins ) . '; font-src data:"><meta name="referrer" content="no-referrer"><base target="_blank">';
+		if ( preg_match( '/<head\b[^>]*>/i', $html, $match, PREG_OFFSET_CAPTURE ) ) {
+			$at = $match[0][1] + strlen( $match[0][0] );
+			return substr( $html, 0, $at ) . $head . substr( $html, $at );
+		}
+		if ( preg_match( '/<html\b[^>]*>/i', $html, $match, PREG_OFFSET_CAPTURE ) ) {
+			$at = $match[0][1] + strlen( $match[0][0] );
+			return substr( $html, 0, $at ) . '<head>' . $head . '</head>' . substr( $html, $at );
+		}
+		return '<!DOCTYPE html><html><head>' . $head . '</head><body>' . $html . '</body></html>';
+	}
+	private static function message_view( $message ) {
+		$pre = 'white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;padding:20px;margin:0;';
+		echo '<h3>' . esc_html__( 'Message', 'coweb-outgoing-mail-archive' ) . '</h3>';
+		if ( ! self::is_html( $message ) ) {
+			echo '<pre dir="auto" style="' . esc_attr( $pre ) . 'text-align:start">' . esc_html( $message ) . '</pre>';
+			return;
+		}
+		// The srcdoc value must be encoded in full: esc_attr() skips existing entities, so an
+		// escaped "&lt;" in the email would turn back into markup inside the frame.
+		$srcdoc = htmlspecialchars( self::preview_document( $message ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8', true );
+		// No allow-scripts and no allow-forms: nothing in the message runs or submits.
+		// allow-same-origin (safe without allow-scripts) lets the admin script size the frame to its content.
+		echo '<iframe title="' . esc_attr__( 'Message preview', 'coweb-outgoing-mail-archive' ) . '" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" data-mailbox-preview="1" style="display:block;width:100%;min-height:400px;border:1px solid #c3c4c7;background:#fff" srcdoc="' . $srcdoc . '"></iframe>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $srcdoc is fully encoded with htmlspecialchars() above.
+		echo '<details style="margin-top:16px"><summary>' . esc_html__( 'Message source', 'coweb-outgoing-mail-archive' ) . '</summary><pre style="' . esc_attr( $pre ) . 'margin-top:8px;direction:ltr;text-align:left">' . esc_html( $message ) . '</pre></details>';
 	}
 	private static function delete_form_start() {
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="site_mailbox_delete">';
@@ -258,7 +306,7 @@ add_action(
 	'admin_enqueue_scripts',
 	function ( $hook ) {
 		if ( $hook === 'toplevel_page_coweb-outgoing-mail-archive' ) {
-			wp_enqueue_script( 'coweb-outgoing-mail-archive-admin', plugins_url( 'assets/admin.js', __FILE__ ), array(), '1.3.3', true );
+			wp_enqueue_script( 'coweb-outgoing-mail-archive-admin', plugins_url( 'assets/admin.js', __FILE__ ), array(), '1.3.4', true );
 		}
 	}
 );

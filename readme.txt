@@ -4,7 +4,7 @@ Tags: email, mail log, smtp, development, debugging
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.3
+Stable tag: 1.3.4
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,11 +14,11 @@ Keep a private log of WordPress email attempts with search, bulk deletion and au
 
 CoWeb Outgoing Mail Archive is a local, bounded troubleshooting mailbox for site maintainers who already have a working mail transport. It records new email attempts made through WordPress wp_mail() in an administrator-only mailbox.
 
-The default mailbox keeps at most 100 messages with a 30-day age limit. Message bodies are shown as escaped source: opening a logged email does not render its HTML or load its remote images. Headers and attachments are not copied. No account, external service or SMTP reconfiguration is required. The mailbox shows the site URL and environment type to help maintainers distinguish local, staging and production installations.
+The default mailbox keeps at most 100 messages with a 30-day age limit. HTML messages open as a preview in a sandboxed frame that runs no scripts or forms and loads images only from your own site, with the escaped source one click below. Plain-text messages are shown as text. Headers and attachments are not copied. No account, external service or SMTP reconfiguration is required. The mailbox shows the site URL and environment type to help maintainers distinguish local, staging and production installations.
 
 This is a focused inspection workflow, with no resend, forwarding or delivery-tracking controls. Reported sending outcomes are explicitly distinguished from confirmed recipient delivery.
 
-* View recipients, subjects, message source, timestamps and reported sending outcomes.
+* View recipients, subjects, a message preview and its source, timestamps and reported sending outcomes.
 * Search by subject or recipient.
 * Delete individual messages, selected messages or all stored messages.
 * Set a maximum number of stored messages (100 by default). Older entries are removed first.
@@ -27,7 +27,7 @@ This is a focused inspection workflow, with no resend, forwarding or delivery-tr
 
 The plugin leaves your existing sending configuration in place. A successful sending outcome is not proof of delivery, inbox placement or reading. A third-party plugin can short-circuit wp_mail(); its return value is recorded without independent delivery confirmation. Queued mail plugins may create an additional entry when a queued message is processed.
 
-Direct SMTP, external API calls that bypass wp_mail() and other programs on the server are outside the scope of this plugin. Historical mail is not imported. Attachments and mail headers are not stored. HTML messages are displayed as escaped source without executing scripts or loading remote images.
+Direct SMTP, external API calls that bypass wp_mail() and other programs on the server are outside the scope of this plugin. Historical mail is not imported. Attachments and mail headers are not stored. The HTML preview executes no scripts, submits no forms and blocks images, fonts and other files from other servers through a Content Security Policy; images hosted on your own site are shown. Links in the preview open in a new tab.
 
 Developed by [Yaniv Sasson](https://yanivsasson.com/).
 [Plugin page](https://coweb.co.il/plugins/outgoing-mail-archive/) | [CoWeb plugins](https://coweb.co.il/plugins/)
@@ -71,6 +71,10 @@ Stored fields: recipients, subject, message body, UTC timestamp, reported sendin
 
 == Changelog ==
 
+= 1.3.4 =
+* HTML messages now open as a rendered preview in a sandboxed frame (no scripts, no forms, no images from other servers). The source is still available under the preview.
+* Plain-text messages follow the direction of their own text.
+
 = 1.3.3 =
 * Shortened the admin menu label and mailbox page title to Outgoing Mail Archive.
 
@@ -92,6 +96,9 @@ Stored fields: recipients, subject, message body, UTC timestamp, reported sendin
 * Initial private release.
 
 == Upgrade Notice ==
+
+= 1.3.4 =
+HTML messages are shown rendered instead of as source. No data changes.
 
 = 1.3.3 =
 Shorter admin menu label and page title. No data changes.

@@ -11,6 +11,28 @@ document.addEventListener(
 		}
 	}
 );
+document.querySelectorAll( 'iframe[data-mailbox-preview]' ).forEach(
+	function (frame) {
+		function fit() {
+			var doc;
+			try {
+				doc = frame.contentDocument;
+			} catch (e) {
+				return;
+			}
+			if ( ! doc || ! doc.documentElement) {
+				return;
+			}
+			frame.style.height = '0';
+			frame.style.height = doc.documentElement.scrollHeight + 'px';
+		}
+		frame.addEventListener( 'load', fit );
+		window.addEventListener( 'resize', fit );
+		if (frame.contentDocument && frame.contentDocument.readyState === 'complete') {
+			fit();
+		}
+	}
+);
 document.addEventListener(
 	'submit',
 	function (event) {
